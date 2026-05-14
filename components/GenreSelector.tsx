@@ -1,15 +1,18 @@
 'use client'
 
 import { GenreName, GENRE_LABELS } from '@/types/movie'
+import { t, UILanguage } from '@/lib/translations'
 
 interface GenreSelectorProps {
   genres: GenreName[]
   selectedGenres: GenreName[]
   onToggle: (genre: GenreName) => void
+  onClearAll: () => void
   disabled?: boolean
+  uiLang: UILanguage
 }
 
-export default function GenreSelector({ genres, selectedGenres, onToggle, disabled, onClearAll }: GenreSelectorProps & { onClearAll: () => void }) {
+export default function GenreSelector({ genres, selectedGenres, onToggle, disabled, onClearAll, uiLang }: GenreSelectorProps) {
   const allSelected = selectedGenres.length === 0
   return (
     <div className="flex flex-wrap gap-2 justify-center">
@@ -26,7 +29,7 @@ export default function GenreSelector({ genres, selectedGenres, onToggle, disabl
           }
         `}
       >
-        🎲 Alle
+        🎲 {t(uiLang, 'allGenres')}
       </button>
       {genres.map((genre) => {
         const isSelected = selectedGenres.includes(genre)

@@ -1,15 +1,18 @@
 'use client'
 
 import { ContentType } from '@/types/movie'
+import { t, UILanguage } from '@/lib/translations'
 
 interface TypeSelectorProps {
   onSelect: (type: ContentType) => void
+  uiLang: UILanguage
 }
 
-export default function TypeSelector({ onSelect }: TypeSelectorProps) {
+export default function TypeSelector({ onSelect, uiLang }: TypeSelectorProps) {
+  const T = (key: string) => t(uiLang, key)
   return (
     <div className="space-y-4 animate-fade-in">
-      <p className="text-center text-cinema-muted text-sm">Wat wil je vanavond kijken?</p>
+      <p className="text-center text-cinema-muted text-sm">{T('whatToWatch')}</p>
       <div className="grid grid-cols-2 gap-4">
         <button
           onClick={() => onSelect('film')}
@@ -19,8 +22,8 @@ export default function TypeSelector({ onSelect }: TypeSelectorProps) {
                      transition-all duration-200 active:scale-95 group"
         >
           <span className="text-4xl sm:text-5xl group-hover:scale-110 transition-transform duration-200">🎬</span>
-          <span className="text-white font-semibold text-base sm:text-lg">Film</span>
-          <span className="text-cinema-muted text-xs text-center">Speelfilm, documentaire, animatie</span>
+          <span className="text-white font-semibold text-base sm:text-lg">{T('filmLabel')}</span>
+          <span className="text-cinema-muted text-xs text-center">{T('filmDesc')}</span>
         </button>
         <button
           onClick={() => onSelect('serie')}
@@ -30,8 +33,8 @@ export default function TypeSelector({ onSelect }: TypeSelectorProps) {
                      transition-all duration-200 active:scale-95 group"
         >
           <span className="text-4xl sm:text-5xl group-hover:scale-110 transition-transform duration-200">📺</span>
-          <span className="text-white font-semibold text-base sm:text-lg">Serie</span>
-          <span className="text-cinema-muted text-xs text-center">TV-series, miniseries, reality</span>
+          <span className="text-white font-semibold text-base sm:text-lg">{T('serieLabel')}</span>
+          <span className="text-cinema-muted text-xs text-center">{T('serieDesc')}</span>
         </button>
       </div>
     </div>

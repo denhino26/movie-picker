@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { GenreName, Movie, AppPhase, ContentType, FILM_GENRES, SERIE_GENRES, YearRangeKey, LanguageCode, YEAR_RANGES, LANGUAGE_OPTIONS } from '@/types/movie'
+import { t, UILanguage, UI_LANGUAGES } from '@/lib/translations'
 import TypeSelector from '@/components/TypeSelector'
 import GenreSelector from '@/components/GenreSelector'
 import YearRangeSelector from '@/components/YearRangeSelector'
@@ -44,6 +45,7 @@ function resolveGenreNames(ids: number[]): string[] {
 }
 
 export default function Home() {
+  const [uiLang,          setUiLang]          = useState<UILanguage>('nl')
   const [contentType,    setContentType]    = useState<ContentType>('film')
   const [selectedGenres, setSelectedGenres] = useState<GenreName[]>([])
   const [yearRanges,     setYearRanges]     = useState<YearRangeKey[]>([])
@@ -54,6 +56,9 @@ export default function Home() {
   const [phase,          setPhase]          = useState<AppPhase>('type-select')
   const [currentPage,    setCurrentPage]    = useState(1)
   const [totalPages,     setTotalPages]     = useState(1)
+  const [chosenMovie,    setChosenMovie]    = useState<Movie | null>(null)
+
+  const T = (key: string) => t(uiLang, key)
 
   const toggleYearRange = (key: YearRangeKey) => {
     setYearRanges((prev) =>
@@ -136,8 +141,6 @@ export default function Home() {
     [movies, currentIndex, seenMovies, currentPage, totalPages, searchMovies]
   )
 
-  const [chosenMovie, setChosenMovie] = useState<Movie | null>(null)
-
   const handlePerfect = () => {
     setChosenMovie(movies[currentIndex] ?? null)
     setPhase('success')
@@ -162,7 +165,7 @@ export default function Home() {
   }
 
   const activeGenres = contentType === 'serie' ? SERIE_GENRES : FILM_GENRES
-  const zoekLabel    = contentType === 'serie' ? 'Zoek serie' : 'Zoek film'
+  const searchLabel  = contentType === 'serie' ? T('searchSerie') : T('searchFilm')
 
   return (
     <main className="min-h-screen bg-gradient-cinema px-4 py-6 sm:py-8">
@@ -177,43 +180,63 @@ export default function Home() {
           >
             🎬 Movie Picker
           </button>
-          <p className="text-cinema-muted text-sm">Vind jouw volgende favoriete {contentType === 'serie' ? 'serie' : 'film'}</p>
+          <p className="text-cinema-muted text-sm">
+            {T('subtitle')} {contentType === 'serie' ? T('serie') : T('film')}
+          </p>
         </div>
 
         {/* Type selection */}
         {phase === 'type-select' && (
-          <TypeSelector onSelect={handleTypeSelect} />
+          <div className="space-y-6 animate-fade-in">
+            {/* UI Language switcher */}
+            <div className="flex items-center justify-center gap-1">
+              {UI_LANGUAGES.map(({ code, flag, label }) => (
+                <button
+                  key={code}
+                  onClick={() => setUiLang(code)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200
+                    ${uiLang === code
+                      ? 'bg-white/15 text-white border border-white/30'
+                      : 'text-cinema-muted hover:text-white border border-transparent'
+                    }`}
+                >
+                  {flag} {label}
+                </button>
+              ))}
+            </div>
+            <TypeSelector onSelect={handleTypeSelect} uiLang={uiLang} />
+          </div>
         )}
 
         {/* Genre selection + loading */}
         {(phase === 'select' || phase === 'loading') && (
           <div className="space-y-3 sm:space-y-4 animate-fade-in">
-            {/* Back to type */}
             <button
               onClick={reset}
               className="flex items-center gap-1 text-sm text-cinema-muted hover:text-white transition-colors"
             >
-              ← {contentType === 'serie' ? '📺 Serie' : '🎬 Film'} wijzigen
+              ← {contentType === 'serie' ? '📺 Serie' : '🎬 Film'} {T('changeType')}
             </button>
 
-            {/* TAAL + PERIODE side by side on desktop */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <LanguageSelector
                 selected={language}
                 onSelect={setLanguage}
                 disabled={phase === 'loading'}
+                uiLang={uiLang}
               />
               <YearRangeSelector
                 selected={yearRanges}
                 onToggle={toggleYearRange}
                 disabled={phase === 'loading'}
+                uiLang={uiLang}
               />
             </div>
 
             <div className="border-t border-white/5" />
 
             <p className="text-xs font-medium text-cinema-muted uppercase tracking-wider text-center">
-              Genre
+              {T('genre')}
             </p>
 
             <GenreSelector
@@ -222,11 +245,11 @@ export default function Home() {
               onToggle={toggleGenre}
               onClearAll={() => setSelectedGenres([])}
               disabled={phase === 'loading'}
+              uiLang={uiLang}
             />
 
             {phase === 'select' && (
               <>
-                {/* Proactieve hints */}
                 {(() => {
                   const nicheLanguage = language !== 'en' && language !== 'all'
                   const hasYearFilter = yearRanges.length > 0
@@ -236,9 +259,9 @@ export default function Home() {
 
                   const hints: string[] = []
                   if (restrictiveCount >= 2 && nicheLanguage)
-                    hints.push(`${LANGUAGE_OPTIONS[language].label} + andere filters samen → kans op weinig resultaten`)
+                    hints.push(`${LANGUAGE_OPTIONS[language].label} ${T('hintLanguageCombo')}`)
                   if (hasAdult && (nicheLanguage || hasYearFilter))
-                    hints.push('18+ is sowieso schaars — combineer het niet met andere filters')
+                    hints.push(T('hintAdult'))
 
                   return hints.length > 0 ? (
                     <div className="rounded-xl bg-amber-950/40 border border-amber-500/30 p-3 space-y-1">
@@ -257,12 +280,12 @@ export default function Home() {
                              transition-all duration-200 active:scale-[0.98]
                              shadow-xl shadow-red-900/40"
                 >
-                  {zoekLabel}
+                  {searchLabel}
                 </button>
               </>
             )}
 
-            {phase === 'loading' && <LoadingAnimation />}
+            {phase === 'loading' && <LoadingAnimation uiLang={uiLang} contentType={contentType} />}
           </div>
         )}
 
@@ -281,6 +304,7 @@ export default function Home() {
               onPerfect={handlePerfect}
               onSeen={() => advanceMovie(true)}
               onNext={() => advanceMovie(false)}
+              uiLang={uiLang}
             />
             <button
               onClick={backToGenres}
@@ -288,7 +312,7 @@ export default function Home() {
                          bg-cinema-card/50 hover:bg-cinema-card border border-white/5
                          transition-all duration-200 active:scale-95"
             >
-              ← Andere genres kiezen
+              {T('otherGenres')}
             </button>
           </div>
         )}
@@ -302,6 +326,7 @@ export default function Home() {
             selectedGenres={selectedGenres}
             language={language}
             yearRanges={yearRanges}
+            uiLang={uiLang}
           />
         )}
 
@@ -309,14 +334,14 @@ export default function Home() {
         {phase === 'success' && (
           <div className="text-center py-12 space-y-5 animate-fade-in">
             <div className="text-6xl">🎉</div>
-            <h3 className="text-2xl font-bold text-white">Geweldige keuze!</h3>
+            <h3 className="text-2xl font-bold text-white">{T('greatChoice')}</h3>
             {chosenMovie && (
               <p className="text-lg text-white font-medium">
                 {chosenMovie.title || chosenMovie.name}
               </p>
             )}
             <p className="text-cinema-muted text-sm">
-              Geniet van de {contentType === 'serie' ? 'serie' : 'film'}!
+              {contentType === 'serie' ? T('enjoySerie') : T('enjoyFilm')}
             </p>
             <div className="flex flex-col gap-2 pt-2">
               <button
@@ -325,7 +350,7 @@ export default function Home() {
                            border border-white/10 font-medium text-sm
                            transition-all duration-200 active:scale-95"
               >
-                Toch nog verder kijken
+                {T('keepBrowsing')}
               </button>
               <button
                 onClick={reset}
@@ -333,7 +358,7 @@ export default function Home() {
                            font-medium text-sm transition-all duration-200 active:scale-95
                            shadow-lg shadow-red-900/40"
               >
-                Opnieuw beginnen
+                {T('startOver')}
               </button>
             </div>
           </div>

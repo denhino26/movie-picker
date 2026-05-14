@@ -1,21 +1,24 @@
 'use client'
 
 import { YearRangeKey, YEAR_RANGES, ALL_YEAR_RANGES } from '@/types/movie'
+import { t, UILanguage } from '@/lib/translations'
 
 interface YearRangeSelectorProps {
   selected: YearRangeKey[]
   onToggle: (key: YearRangeKey) => void
   disabled?: boolean
+  uiLang: UILanguage
 }
 
-export default function YearRangeSelector({ selected, onToggle, disabled }: YearRangeSelectorProps) {
+export default function YearRangeSelector({ selected, onToggle, disabled, uiLang }: YearRangeSelectorProps) {
+  const T = (key: string) => t(uiLang, key)
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-cinema-muted uppercase tracking-wider text-center">
-        Periode
+        {T('period')}
         {selected.length > 0
-          ? <span className="normal-case italic ml-2">({selected.length} geselecteerd)</span>
-          : <span className="normal-case italic ml-2">(alle jaren)</span>
+          ? <span className="normal-case italic ml-2">({selected.length} {T('periodSelected')})</span>
+          : <span className="normal-case italic ml-2">({T('allYears')})</span>
         }
       </p>
       <div className="flex flex-wrap gap-2 justify-center">

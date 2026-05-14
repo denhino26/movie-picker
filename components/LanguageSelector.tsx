@@ -1,18 +1,20 @@
 'use client'
 
 import { LanguageCode, LANGUAGE_OPTIONS, ALL_LANGUAGE_CODES } from '@/types/movie'
+import { t, UILanguage } from '@/lib/translations'
 
 interface LanguageSelectorProps {
   selected: LanguageCode
   onSelect: (code: LanguageCode) => void
   disabled?: boolean
+  uiLang: UILanguage
 }
 
-export default function LanguageSelector({ selected, onSelect, disabled }: LanguageSelectorProps) {
+export default function LanguageSelector({ selected, onSelect, disabled, uiLang }: LanguageSelectorProps) {
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-cinema-muted uppercase tracking-wider text-center">
-        Taal
+        {t(uiLang, 'language')}
       </p>
       <div className="flex flex-wrap gap-2 justify-center">
         {ALL_LANGUAGE_CODES.map((code) => {

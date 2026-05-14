@@ -1,6 +1,12 @@
 import { Film } from 'lucide-react'
+import { t, UILanguage } from '@/lib/translations'
 
-export default function LoadingAnimation() {
+interface LoadingAnimationProps {
+  uiLang: UILanguage
+  contentType: 'film' | 'serie'
+}
+
+export default function LoadingAnimation({ uiLang, contentType }: LoadingAnimationProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-6 py-16">
       <div className="relative w-20 h-20">
@@ -11,7 +17,7 @@ export default function LoadingAnimation() {
         </div>
       </div>
       <p className="text-cinema-text text-lg font-medium animate-pulse">
-        Films worden gezocht...
+        {contentType === 'serie' ? t(uiLang, 'searchingSeries') : t(uiLang, 'searchingFilms')}
       </p>
     </div>
   )

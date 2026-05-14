@@ -49,7 +49,7 @@ export default function Home() {
   const [contentType,    setContentType]    = useState<ContentType>('film')
   const [selectedGenres, setSelectedGenres] = useState<GenreName[]>([])
   const [yearRanges,     setYearRanges]     = useState<YearRangeKey[]>([])
-  const [language,       setLanguage]       = useState<LanguageCode>('nl')
+  const [language,       setLanguage]       = useState<LanguageCode>('en')
   const [movies,         setMovies]         = useState<Movie[]>([])
   const [currentIndex,   setCurrentIndex]   = useState(0)
   const [seenMovies,     setSeenMovies]     = useState<Set<number>>(new Set())
@@ -59,6 +59,12 @@ export default function Home() {
   const [chosenMovie,    setChosenMovie]    = useState<Movie | null>(null)
 
   const T = (key: string) => t(uiLang, key)
+
+  const changeUiLang = (lang: UILanguage) => {
+    setUiLang(lang)
+    const map: Record<UILanguage, LanguageCode> = { nl: 'nl', en: 'en', es: 'es', fr: 'fr', de: 'de' }
+    setLanguage(map[lang])
+  }
 
   const toggleYearRange = (key: YearRangeKey) => {
     setYearRanges((prev) =>
@@ -193,7 +199,7 @@ export default function Home() {
               {UI_LANGUAGES.map(({ code, flag, label }) => (
                 <button
                   key={code}
-                  onClick={() => setUiLang(code)}
+                  onClick={() => changeUiLang(code)}
                   className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200
                     ${uiLang === code
                       ? 'bg-white/15 text-white border border-white/30'

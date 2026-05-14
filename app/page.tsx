@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { GenreName, Movie, AppPhase, ContentType, FILM_GENRES, SERIE_GENRES, YearRangeKey, LanguageCode, YEAR_RANGES } from '@/types/movie'
+import { GenreName, Movie, AppPhase, ContentType, FILM_GENRES, SERIE_GENRES, YearRangeKey, LanguageCode, YEAR_RANGES, LANGUAGE_OPTIONS } from '@/types/movie'
 import TypeSelector from '@/components/TypeSelector'
 import GenreSelector from '@/components/GenreSelector'
 import YearRangeSelector from '@/components/YearRangeSelector'
@@ -222,17 +222,38 @@ export default function Home() {
             />
 
             {phase === 'select' && (
-              <button
-                onClick={() => searchMovies(1)}
-                disabled={false}
-                className="w-full py-4 rounded-2xl bg-red-600 hover:bg-red-500
-                           disabled:opacity-40 disabled:cursor-not-allowed
-                           text-white font-semibold text-lg
-                           transition-all duration-200 active:scale-[0.98]
-                           shadow-xl shadow-red-900/40"
-              >
-                {zoekLabel}
-              </button>
+              <>
+                {/* Proactieve hints */}
+                {(() => {
+                  const hints: string[] = []
+                  if (language !== 'en' && language !== 'all')
+                    hints.push(`${LANGUAGE_OPTIONS[language].label} heeft minder titels — overweeg 🌐 Alle talen`)
+                  if (yearRanges.length > 0 && (language !== 'en' && language !== 'all'))
+                    hints.push('Combinatie van taal + periode geeft soms weinig resultaten')
+                  if (selectedGenres.includes('18+'))
+                    hints.push('18+ heeft een beperkt aanbod op TMDB')
+                  if (selectedGenres.length > 2)
+                    hints.push('Meer genres selecteren versmalt de resultaten')
+                  return hints.length > 0 ? (
+                    <div className="rounded-xl bg-amber-950/40 border border-amber-500/30 p-3 space-y-1">
+                      {hints.map((h, i) => (
+                        <p key={i} className="text-xs text-amber-300 flex items-start gap-1.5">
+                          <span className="shrink-0">⚠️</span>{h}
+                        </p>
+                      ))}
+                    </div>
+                  ) : null
+                })()}
+                <button
+                  onClick={() => searchMovies(1)}
+                  className="w-full py-4 rounded-2xl bg-red-600 hover:bg-red-500
+                             text-white font-semibold text-lg
+                             transition-all duration-200 active:scale-[0.98]
+                             shadow-xl shadow-red-900/40"
+                >
+                  {zoekLabel}
+                </button>
+              </>
             )}
 
             {phase === 'loading' && <LoadingAnimation />}

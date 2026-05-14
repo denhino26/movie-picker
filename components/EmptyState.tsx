@@ -1,4 +1,4 @@
-import { GenreName, LanguageCode, YearRangeKey, GENRE_LABELS, YEAR_RANGES, LANGUAGE_OPTIONS } from '@/types/movie'
+import { GenreName, LanguageCode, YearRangeKey, YEAR_RANGES, LANGUAGE_OPTIONS } from '@/types/movie'
 
 interface EmptyStateProps {
   onRetry: () => void

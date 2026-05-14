@@ -265,7 +265,16 @@ export default function Home() {
         )}
 
         {/* Empty */}
-        {phase === 'empty' && <EmptyState onRetry={reset} contentType={contentType} />}
+        {phase === 'empty' && (
+          <EmptyState
+            onRetry={reset}
+            onBack={backToGenres}
+            contentType={contentType}
+            selectedGenres={selectedGenres}
+            language={language}
+            yearRanges={yearRanges}
+          />
+        )}
 
         {/* Success */}
         {phase === 'success' && (

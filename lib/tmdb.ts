@@ -17,7 +17,7 @@ export function buildFilmUrl(
   dateRange?: DateRange,
   language?: string
 ): string {
-  const genreIds       = [...new Set(genres.flatMap((g) => FILM_GENRE_MAP[g] ?? []))]
+  const genreIds       = Array.from(new Set(genres.flatMap((g) => FILM_GENRE_MAP[g] ?? [])))
   const includesZombie = genres.includes('zombie')
   const includesAdult  = genres.includes('18+')
 
@@ -48,7 +48,7 @@ export function buildSerieUrl(
   dateRange?: DateRange,
   language?: string
 ): string {
-  const genreIds      = [...new Set(genres.flatMap((g) => SERIE_GENRE_MAP[g] ?? []))]
+  const genreIds      = Array.from(new Set(genres.flatMap((g) => SERIE_GENRE_MAP[g] ?? [])))
   const includesAdult = genres.includes('18+')
 
   const params = new URLSearchParams({

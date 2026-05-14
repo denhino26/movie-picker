@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { fetchFilms, fetchSeries } from '@/lib/tmdb'
 import { GenreName, FILM_GENRES, SERIE_GENRES, Movie, YearRangeKey, computeDateRange } from '@/types/movie'
 
-const ALL_KNOWN_GENRES = [...new Set([...FILM_GENRES, ...SERIE_GENRES])]
+const ALL_KNOWN_GENRES = Array.from(new Set([...FILM_GENRES, ...SERIE_GENRES]))
 
 const MOCK_MOVIES: Movie[] = [
   {

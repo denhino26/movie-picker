@@ -115,7 +115,7 @@ export default function Home() {
       let newSeen   = seenMovies
 
       if (markSeen && current) {
-        newSeen = new Set([...seenMovies, current.id])
+        newSeen = new Set(Array.from(seenMovies).concat(current.id))
         setSeenMovies(newSeen)
       }
 

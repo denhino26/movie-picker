@@ -23,7 +23,7 @@ export default function LanguageSelector({ selected, onSelect, disabled }: Langu
               onClick={() => onSelect(code)}
               disabled={disabled}
               className={`
-                px-3 py-2.5 rounded-full border text-sm font-medium min-h-[44px]
+                px-3 py-2.5 rounded-full border text-sm font-medium min-h-[44px] sm:min-h-0 sm:py-1.5
                 transition-all duration-200 select-none
                 disabled:opacity-50 disabled:cursor-not-allowed
                 ${isSelected

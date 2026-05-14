@@ -47,7 +47,7 @@ export default function Home() {
   const [contentType,    setContentType]    = useState<ContentType>('film')
   const [selectedGenres, setSelectedGenres] = useState<GenreName[]>([])
   const [yearRanges,     setYearRanges]     = useState<YearRangeKey[]>([])
-  const [language,       setLanguage]       = useState<LanguageCode>('en')
+  const [language,       setLanguage]       = useState<LanguageCode>('nl')
   const [movies,         setMovies]         = useState<Movie[]>([])
   const [currentIndex,   setCurrentIndex]   = useState(0)
   const [seenMovies,     setSeenMovies]     = useState<Set<number>>(new Set())
@@ -165,19 +165,19 @@ export default function Home() {
   const zoekLabel    = contentType === 'serie' ? 'Zoek serie' : 'Zoek film'
 
   return (
-    <main className="min-h-screen bg-gradient-cinema px-4 py-6 sm:py-12">
-      <div className="max-w-lg mx-auto space-y-8">
+    <main className="min-h-screen bg-gradient-cinema px-4 py-6 sm:py-8">
+      <div className="max-w-lg sm:max-w-2xl mx-auto space-y-4 sm:space-y-5">
 
         {/* Header */}
-        <div className="text-center space-y-2 animate-fade-in">
+        <div className="text-center space-y-1 animate-fade-in">
           <button
             onClick={phase !== 'type-select' ? reset : undefined}
-            className={`text-4xl font-bold text-white tracking-tight transition-opacity duration-200
+            className={`text-3xl sm:text-4xl font-bold text-white tracking-tight transition-opacity duration-200
               ${phase !== 'type-select' ? 'hover:opacity-70 cursor-pointer' : 'cursor-default'}`}
           >
             🎬 Movie Picker
           </button>
-          <p className="text-cinema-muted">Vind jouw volgende favoriete {contentType === 'serie' ? 'serie' : 'film'}</p>
+          <p className="text-cinema-muted text-sm">Vind jouw volgende favoriete {contentType === 'serie' ? 'serie' : 'film'}</p>
         </div>
 
         {/* Type selection */}
@@ -187,7 +187,7 @@ export default function Home() {
 
         {/* Genre selection + loading */}
         {(phase === 'select' || phase === 'loading') && (
-          <div className="space-y-5 animate-fade-in">
+          <div className="space-y-3 sm:space-y-4 animate-fade-in">
             {/* Back to type */}
             <button
               onClick={reset}
@@ -196,19 +196,19 @@ export default function Home() {
               ← {contentType === 'serie' ? '📺 Serie' : '🎬 Film'} wijzigen
             </button>
 
-            <LanguageSelector
-              selected={language}
-              onSelect={setLanguage}
-              disabled={phase === 'loading'}
-            />
-
-            <div className="border-t border-white/5" />
-
-            <YearRangeSelector
-              selected={yearRanges}
-              onToggle={toggleYearRange}
-              disabled={phase === 'loading'}
-            />
+            {/* TAAL + PERIODE side by side on desktop */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <LanguageSelector
+                selected={language}
+                onSelect={setLanguage}
+                disabled={phase === 'loading'}
+              />
+              <YearRangeSelector
+                selected={yearRanges}
+                onToggle={toggleYearRange}
+                disabled={phase === 'loading'}
+              />
+            </div>
 
             <div className="border-t border-white/5" />
 

@@ -92,7 +92,8 @@ export default function Home() {
 
         if (!res.ok) { setPhase('empty'); return }
 
-        const fresh    = (data.results as Movie[]).filter((m) => !existingSeen.has(m.id))
+        const shuffle  = <T,>(arr: T[]) => arr.map((v) => ({ v, r: Math.random() })).sort((a, b) => a.r - b.r).map(({ v }) => v)
+        const fresh    = shuffle((data.results as Movie[]).filter((m) => !existingSeen.has(m.id)))
         const combined = page === 1 ? fresh : [...existingMovies, ...fresh]
 
         if (combined.length === 0) { setPhase('empty'); return }

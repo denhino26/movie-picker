@@ -225,15 +225,18 @@ export default function Home() {
               <>
                 {/* Proactieve hints */}
                 {(() => {
+                  const nicheLanguage = language !== 'en' && language !== 'all'
+                  const hasYearFilter = yearRanges.length > 0
+                  const hasGenreFilter = selectedGenres.length > 0
+                  const hasAdult = selectedGenres.includes('18+')
+                  const restrictiveCount = [nicheLanguage, hasYearFilter, hasGenreFilter].filter(Boolean).length
+
                   const hints: string[] = []
-                  if (language !== 'en' && language !== 'all')
-                    hints.push(`${LANGUAGE_OPTIONS[language].label} heeft minder titels — overweeg 🌐 Alle talen`)
-                  if (yearRanges.length > 0 && (language !== 'en' && language !== 'all'))
-                    hints.push('Combinatie van taal + periode geeft soms weinig resultaten')
-                  if (selectedGenres.includes('18+'))
-                    hints.push('18+ heeft een beperkt aanbod op TMDB')
-                  if (selectedGenres.length > 2)
-                    hints.push('Meer genres selecteren versmalt de resultaten')
+                  if (restrictiveCount >= 2 && nicheLanguage)
+                    hints.push(`${LANGUAGE_OPTIONS[language].label} + andere filters samen → kans op weinig resultaten`)
+                  if (hasAdult && (nicheLanguage || hasYearFilter))
+                    hints.push('18+ is sowieso schaars — combineer het niet met andere filters')
+
                   return hints.length > 0 ? (
                     <div className="rounded-xl bg-amber-950/40 border border-amber-500/30 p-3 space-y-1">
                       {hints.map((h, i) => (

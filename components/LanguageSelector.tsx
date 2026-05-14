@@ -11,7 +11,7 @@ interface LanguageSelectorProps {
 export default function LanguageSelector({ selected, onSelect, disabled }: LanguageSelectorProps) {
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-cinema-muted uppercase tracking-wider">
+      <p className="text-xs font-medium text-cinema-muted uppercase tracking-wider text-center">
         Taal
       </p>
       <div className="flex flex-wrap gap-2 justify-center">

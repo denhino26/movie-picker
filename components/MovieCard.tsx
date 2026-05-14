@@ -145,7 +145,7 @@ export default function MovieCard({ movie, genreNames, contentType, onPerfect, o
                        disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Play size={14} />
-            {trailerLoading ? 'Laden...' : '▶ Bekijk trailer'}
+            {trailerLoading ? 'Laden...' : 'Bekijk trailer'}
           </button>
 
           {/* Action buttons */}

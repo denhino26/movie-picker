@@ -11,19 +11,13 @@ interface YearRangeSelectorProps {
 export default function YearRangeSelector({ selected, onToggle, disabled }: YearRangeSelectorProps) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-cinema-muted uppercase tracking-wider">
-          Periode
-        </p>
-        {selected.length > 0 && (
-          <span className="text-xs text-cinema-muted italic">
-            {selected.length} geselecteerd
-          </span>
-        )}
-        {selected.length === 0 && (
-          <span className="text-xs text-cinema-muted italic">Alle jaren</span>
-        )}
-      </div>
+      <p className="text-xs font-medium text-cinema-muted uppercase tracking-wider text-center">
+        Periode
+        {selected.length > 0
+          ? <span className="normal-case italic ml-2">({selected.length} geselecteerd)</span>
+          : <span className="normal-case italic ml-2">(alle jaren)</span>
+        }
+      </p>
       <div className="flex flex-wrap gap-2 justify-center">
         {ALL_YEAR_RANGES.map((key) => {
           const isSelected = selected.includes(key)

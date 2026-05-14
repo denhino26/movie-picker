@@ -136,9 +136,11 @@ export default function Home() {
     [movies, currentIndex, seenMovies, currentPage, totalPages, searchMovies]
   )
 
+  const [chosenMovie, setChosenMovie] = useState<Movie | null>(null)
+
   const handlePerfect = () => {
+    setChosenMovie(movies[currentIndex] ?? null)
     setPhase('success')
-    setTimeout(() => advanceMovie(false), 2200)
   }
 
   const reset = () => {
@@ -282,7 +284,9 @@ export default function Home() {
             />
             <button
               onClick={backToGenres}
-              className="w-full text-center text-sm text-cinema-muted hover:text-white transition-colors py-2"
+              className="w-full py-2.5 rounded-xl text-center text-sm text-cinema-muted hover:text-white
+                         bg-cinema-card/50 hover:bg-cinema-card border border-white/5
+                         transition-all duration-200 active:scale-95"
             >
               ← Andere genres kiezen
             </button>
@@ -303,12 +307,35 @@ export default function Home() {
 
         {/* Success */}
         {phase === 'success' && (
-          <div className="text-center py-16 space-y-4 animate-fade-in">
+          <div className="text-center py-12 space-y-5 animate-fade-in">
             <div className="text-6xl">🎉</div>
             <h3 className="text-2xl font-bold text-white">Geweldige keuze!</h3>
-            <p className="text-cinema-muted">
+            {chosenMovie && (
+              <p className="text-lg text-white font-medium">
+                {chosenMovie.title || chosenMovie.name}
+              </p>
+            )}
+            <p className="text-cinema-muted text-sm">
               Geniet van de {contentType === 'serie' ? 'serie' : 'film'}!
             </p>
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                onClick={() => advanceMovie(false)}
+                className="w-full py-3 rounded-xl bg-cinema-card hover:bg-white/10 text-white
+                           border border-white/10 font-medium text-sm
+                           transition-all duration-200 active:scale-95"
+              >
+                Toch nog verder kijken
+              </button>
+              <button
+                onClick={reset}
+                className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white
+                           font-medium text-sm transition-all duration-200 active:scale-95
+                           shadow-lg shadow-red-900/40"
+              >
+                Opnieuw beginnen
+              </button>
+            </div>
           </div>
         )}
 

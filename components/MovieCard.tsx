@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Star, CheckCircle, SkipForward, Heart, ChevronDown, ChevronUp } from 'lucide-react'
+import { Star, CheckCircle, SkipForward, Heart, ChevronDown, ChevronUp, Play } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { Movie } from '@/types/movie'
 import { getPosterUrl } from '@/lib/utils'
@@ -33,12 +33,27 @@ function StarRating({ score }: { score: number }) {
 }
 
 export default function MovieCard({ movie, genreNames, contentType, onPerfect, onSeen, onNext }: MovieCardProps) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded,      setExpanded]      = useState(false)
+  const [trailerLoading, setTrailerLoading] = useState(false)
 
-  // Reset expanded state when movie changes
   useEffect(() => {
     setExpanded(false)
   }, [movie.id])
+
+  const openTrailer = async () => {
+    setTrailerLoading(true)
+    try {
+      const res  = await fetch(`/api/trailer?id=${movie.id}&type=${contentType}`)
+      const data = await res.json()
+      if (data.key) {
+        window.open(`https://www.youtube.com/watch?v=${data.key}`, '_blank')
+      } else {
+        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent((movie.title || movie.name || '') + ' trailer')}`, '_blank')
+      }
+    } finally {
+      setTrailerLoading(false)
+    }
+  }
 
   const handlePerfect = () => {
     confetti({
@@ -120,8 +135,21 @@ export default function MovieCard({ movie, genreNames, contentType, onPerfect, o
             )}
           </div>
 
+          {/* Trailer button */}
+          <button
+            onClick={openTrailer}
+            disabled={trailerLoading}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
+                       bg-cinema-surface hover:bg-white/10 text-cinema-muted hover:text-white
+                       border border-white/10 text-sm transition-all duration-200 active:scale-95
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Play size={14} />
+            {trailerLoading ? 'Laden...' : '▶ Bekijk trailer'}
+          </button>
+
           {/* Action buttons */}
-          <div className="pt-2 space-y-2">
+          <div className="pt-1 space-y-2">
             <button
               onClick={handlePerfect}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Film, Tv } from 'lucide-react'
+import { Tv } from 'lucide-react'
 
 export default function Home() {
   return (

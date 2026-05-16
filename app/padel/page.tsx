@@ -197,7 +197,6 @@ export default function PadelPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const today = new Date().toISOString().split('T')[0]
       const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
       const weekAhead = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
 

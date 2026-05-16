@@ -262,29 +262,36 @@ function MatchCard({ match }: { match: Match }) {
   )
 }
 
+const LEVEL_COLORS: Record<string, string> = {
+  major: 'bg-amber-600/30 text-amber-300 border-amber-500/40',
+  p1: 'bg-sky-600/30 text-sky-300 border-sky-500/40',
+  p2: 'bg-violet-600/30 text-violet-300 border-violet-500/40',
+  finals: 'bg-red-600/30 text-red-300 border-red-500/40',
+}
+
 function TournamentCard({ tournament }: { tournament: Tournament }) {
   const isActive = tournament.status === 'in_progress' || tournament.status === 'live'
   const levelLabel = LEVEL_LABELS[tournament.level] ?? tournament.level
+  const levelColor = LEVEL_COLORS[tournament.level] ?? 'bg-white/10 text-cinema-muted border-white/10'
   return (
     <div className={`bg-cinema-card rounded-xl border p-4 space-y-2 ${
       isActive ? 'border-emerald-500/40' : 'border-white/5'
     }`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Trophy size={14} className={isActive ? 'text-emerald-400' : 'text-amber-400'} />
+          <span className={`text-xs font-bold px-2 py-0.5 rounded border ${levelColor}`}>
+            {levelLabel}
+          </span>
           <span className="text-sm font-bold text-white">{tournament.name}</span>
         </div>
         {isActive && (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-600/30">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 animate-pulse">
             Nu bezig
           </span>
         )}
       </div>
       <div className="flex items-center gap-3 text-xs text-cinema-muted">
         <span>📍 {tournament.location}{tournament.country ? ` (${tournament.country})` : ''}</span>
-        <span className="px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-300 border border-amber-700/20">
-          {levelLabel}
-        </span>
       </div>
       <div className="text-xs text-cinema-muted">
         📅 {formatDate(tournament.start_date)} – {formatDate(tournament.end_date)}
@@ -351,10 +358,12 @@ export default function PadelPage() {
 
   const liveCount = matches.filter(m => m.status === 'live').length
   const activeTournament = tournaments.find(t => t.status === 'in_progress')
+  // Only show active + upcoming tournaments in kalender
+  const upcomingTournaments = tournaments.filter(t => t.status !== 'finished')
 
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'programma', label: '📅 Programma', count: liveCount > 0 ? liveCount : undefined },
-    { key: 'kalender', label: '🏆 Kalender', count: tournaments.length },
+    { key: 'kalender', label: '🏆 Kalender', count: upcomingTournaments.length },
   ]
 
   return (
@@ -528,8 +537,8 @@ export default function PadelPage() {
         {/* Kalender tab */}
         {!loading && tab === 'kalender' && (
           <div className="space-y-3 animate-fade-in">
-            {tournaments.length > 0 ? (
-              tournaments.map(t => <TournamentCard key={t.id} tournament={t} />)
+            {upcomingTournaments.length > 0 ? (
+              upcomingTournaments.map(t => <TournamentCard key={t.id} tournament={t} />)
             ) : (
               <div className="text-center py-12 space-y-3">
                 <div className="text-5xl">🏆</div>

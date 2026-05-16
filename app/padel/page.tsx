@@ -76,6 +76,26 @@ function formatDate(dateStr: string): string {
   } catch { return dateStr }
 }
 
+function translateScheduleLabel(label: string): string {
+  // "Not before 3:00 PM" → "Vanaf 15:00"
+  // "Starting at 1:00 PM" → "Start 13:00"
+  const notBefore = label.match(/Not before (\d{1,2}):(\d{2})\s*(AM|PM)/i)
+  if (notBefore) {
+    let h = parseInt(notBefore[1])
+    if (notBefore[3].toUpperCase() === 'PM' && h !== 12) h += 12
+    if (notBefore[3].toUpperCase() === 'AM' && h === 12) h = 0
+    return `Vanaf ${String(h).padStart(2, '0')}:${notBefore[2]}`
+  }
+  const startingAt = label.match(/Starting at (\d{1,2}):(\d{2})\s*(AM|PM)/i)
+  if (startingAt) {
+    let h = parseInt(startingAt[1])
+    if (startingAt[3].toUpperCase() === 'PM' && h !== 12) h += 12
+    if (startingAt[3].toUpperCase() === 'AM' && h === 12) h = 0
+    return `Start ${String(h).padStart(2, '0')}:${startingAt[2]}`
+  }
+  return label
+}
+
 function formatDayLabel(dateStr: string, today: string, tomorrow: string): string {
   if (dateStr === today) return 'Vandaag'
   if (dateStr === tomorrow) return 'Morgen'
@@ -129,6 +149,7 @@ function MatchCard({ match }: { match: Match }) {
   const team2 = team2Players.length > 0 ? team2Players.map(p => p.name).join(' / ') : 'TBD'
   const sets = match.score?.sets ?? []
   const isLive = match.status === 'live'
+  const isScheduled = match.status === 'scheduled'
   const roundText = match.round_name ?? `Ronde ${match.round}`
 
   // Calculate how long the match has been going
@@ -155,16 +176,20 @@ function MatchCard({ match }: { match: Match }) {
           <CategoryBadge category={match.category} />
           <span className="text-xs text-cinema-muted">{roundText}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-cinema-muted">
+        <div className="flex items-center gap-2 text-xs">
           {isLive && durationText && (
             <span className="text-red-400">⏱ {durationText}</span>
           )}
-          {match.schedule_label ? (
-            <span>{match.schedule_label}</span>
+          {isScheduled && match.schedule_label ? (
+            <span className="text-emerald-400 font-medium">🕐 {translateScheduleLabel(match.schedule_label)}</span>
+          ) : isScheduled && match.started_time ? (
+            <span className="text-emerald-400 font-medium">🕐 {formatTime(match.started_time)}</span>
+          ) : match.schedule_label ? (
+            <span className="text-cinema-muted">{translateScheduleLabel(match.schedule_label)}</span>
           ) : match.started_time ? (
-            <span>{formatTime(match.started_time)}</span>
+            <span className="text-cinema-muted">{formatTime(match.started_time)}</span>
           ) : match.played_at?.includes('T') ? (
-            <span>{formatTime(match.played_at)}</span>
+            <span className="text-cinema-muted">{formatTime(match.played_at)}</span>
           ) : null}
         </div>
       </div>

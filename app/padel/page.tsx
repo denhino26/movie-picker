@@ -54,7 +54,7 @@ function formatTime(dateStr: string): string {
   try {
     const d = new Date(dateStr)
     if (isNaN(d.getTime())) return dateStr
-    return d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+    return d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })
   } catch { return dateStr }
 }
 
@@ -62,7 +62,7 @@ function formatDate(dateStr: string): string {
   try {
     const d = new Date(dateStr)
     if (isNaN(d.getTime())) return dateStr
-    return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+    return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'Europe/Amsterdam' })
   } catch { return dateStr }
 }
 
@@ -348,7 +348,7 @@ export default function PadelPage() {
         {/* Refresh bar */}
         <div className="flex items-center justify-between text-xs text-cinema-muted">
           <span>
-            Bijgewerkt: {lastRefresh.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+            Bijgewerkt: {lastRefresh.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })}
             {isMock && ' (demo data)'}
           </span>
           <button

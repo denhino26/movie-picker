@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { RefreshCw, ArrowLeft, Trophy, Clock, CheckCircle, Radio } from 'lucide-react'
+import { RefreshCw, ArrowLeft, Trophy } from 'lucide-react'
 
 interface Player {
   name: string
@@ -107,157 +107,99 @@ function formatDayLabel(dateStr: string, today: string, tomorrow: string): strin
   } catch { return formatDate(dateStr) }
 }
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === 'live') {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-600/20 text-red-400 border border-red-600/30 animate-pulse">
-        <Radio size={10} /> LIVE
-      </span>
-    )
-  }
-  if (status === 'finished') {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-cinema-surface text-cinema-muted border border-white/10">
-        <CheckCircle size={10} /> Afgelopen
-      </span>
-    )
-  }
-  return (
-    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-700/30">
-      <Clock size={10} /> Gepland
-    </span>
-  )
-}
-
-function CategoryBadge({ category }: { category: string }) {
-  const isWomen = category === 'women'
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-full border ${
-      isWomen
-        ? 'bg-pink-900/30 text-pink-300 border-pink-700/30'
-        : 'bg-sky-900/30 text-sky-300 border-sky-700/30'
-    }`}>
-      {isWomen ? '♀ Dames' : '♂ Heren'}
-    </span>
-  )
+function shortName(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length <= 1) return fullName
+  // First name initial + last name
+  const last = parts[parts.length - 1]
+  return `${parts[0][0]}. ${last}`
 }
 
 function MatchCard({ match }: { match: Match }) {
   const team1Players = match.teams?.[0]?.players ?? []
   const team2Players = match.teams?.[1]?.players ?? []
-  const team1 = team1Players.length > 0 ? team1Players.map(p => p.name).join(' / ') : 'TBD'
-  const team2 = team2Players.length > 0 ? team2Players.map(p => p.name).join(' / ') : 'TBD'
+  const team1 = team1Players.length > 0 ? team1Players.map(p => shortName(p.name)).join(' / ') : 'TBD'
+  const team2 = team2Players.length > 0 ? team2Players.map(p => shortName(p.name)).join(' / ') : 'TBD'
   const sets = match.score?.sets ?? []
   const isLive = match.status === 'live'
   const isScheduled = match.status === 'scheduled'
+  const isFinished = match.status === 'finished'
   const roundText = match.round_name ?? `Ronde ${match.round}`
+  const isWomen = match.category === 'women'
 
-  // Calculate how long the match has been going
-  let durationText = ''
-  if (isLive && match.started_time) {
-    const startMs = new Date(match.started_time).getTime()
-    const nowMs = Date.now()
-    const diffMin = Math.round((nowMs - startMs) / 60000)
-    if (diffMin > 0 && diffMin < 600) {
-      const hrs = Math.floor(diffMin / 60)
-      const mins = diffMin % 60
-      durationText = hrs > 0 ? `${hrs}u ${mins}m` : `${mins}m`
-    }
+  // Time display
+  let timeLabel = ''
+  if (match.schedule_label) {
+    timeLabel = translateScheduleLabel(match.schedule_label)
+  } else if (match.started_time) {
+    timeLabel = formatTime(match.started_time)
   }
 
   return (
-    <div className={`bg-cinema-card rounded-xl border p-4 space-y-3 transition-all duration-200 ${
-      isLive ? 'border-red-500/40 shadow-lg shadow-red-900/10' : 'border-white/5'
+    <div className={`bg-cinema-card rounded-xl border p-3 transition-all duration-200 ${
+      isLive ? 'border-red-500/40' : 'border-white/5'
     }`}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 flex-wrap">
-          <StatusBadge status={match.status} />
-          <CategoryBadge category={match.category} />
-          <span className="text-xs text-cinema-muted">{roundText}</span>
+      {/* Top row: category + round + time */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className={`text-[11px] font-medium ${isWomen ? 'text-pink-400' : 'text-sky-400'}`}>
+            {isWomen ? '♀ Dames' : '♂ Heren'}
+          </span>
+          <span className="text-[11px] text-cinema-muted">·</span>
+          <span className="text-[11px] text-cinema-muted">{roundText}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          {isLive && durationText && (
-            <span className="text-red-400">⏱ {durationText}</span>
+        <div className="flex items-center gap-2">
+          {isLive && (
+            <span className="text-[11px] text-red-400 font-medium animate-pulse">● LIVE</span>
           )}
-          {isScheduled && match.schedule_label ? (
-            <span className="text-emerald-400 font-medium">🕐 {translateScheduleLabel(match.schedule_label)}</span>
-          ) : isScheduled && match.started_time ? (
-            <span className="text-emerald-400 font-medium">🕐 {formatTime(match.started_time)}</span>
-          ) : match.schedule_label ? (
-            <span className="text-cinema-muted">{translateScheduleLabel(match.schedule_label)}</span>
-          ) : match.started_time ? (
-            <span className="text-cinema-muted">{formatTime(match.started_time)}</span>
-          ) : match.played_at?.includes('T') ? (
-            <span className="text-cinema-muted">{formatTime(match.played_at)}</span>
-          ) : null}
+          {timeLabel && (
+            <span className={`text-[11px] font-medium ${isScheduled ? 'text-emerald-400' : 'text-cinema-muted'}`}>
+              {timeLabel}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Tournament */}
-      <div className="flex items-center gap-1.5">
-        <Trophy size={12} className="text-amber-400 shrink-0" />
-        <span className="text-xs text-amber-400 truncate">{match.tournament?.name}</span>
-        {match.court && (
-          <span className="text-xs text-cinema-muted ml-auto shrink-0">📍 {match.court}</span>
-        )}
-      </div>
-
-      {/* Score board */}
-      <div className="bg-cinema-surface rounded-lg p-3 space-y-2">
+      {/* Teams + scores */}
+      <div className="space-y-1.5">
         {/* Team 1 */}
         <div className="flex items-center justify-between">
-          <span className={`text-sm font-medium flex-1 truncate mr-3 ${
-            match.winner === 'team_1' ? 'text-emerald-400' : isLive ? 'text-white' : 'text-cinema-text'
+          <span className={`text-sm font-medium ${
+            match.winner === 'team_1' ? 'text-emerald-400' : isFinished && match.winner === 'team_2' ? 'text-cinema-muted' : 'text-white'
           }`}>
             {team1}
           </span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 ml-3">
             {sets.map((s, i) => (
-              <span key={i} className={`w-7 text-center text-sm font-mono font-bold ${
+              <span key={i} className={`w-6 text-center text-sm font-mono font-bold ${
                 s.team1 > s.team2 ? 'text-emerald-400' : 'text-cinema-muted'
               }`}>
                 {s.team1}
               </span>
             ))}
-            {sets.length === 0 && isLive && (
-              <span className="text-red-400/60 text-xs italic">bezig</span>
-            )}
-            {sets.length === 0 && !isLive && <span className="text-cinema-muted text-sm">—</span>}
+            {sets.length === 0 && !isScheduled && <span className="text-cinema-muted text-xs">—</span>}
           </div>
         </div>
 
-        <div className="border-t border-white/5" />
-
         {/* Team 2 */}
         <div className="flex items-center justify-between">
-          <span className={`text-sm font-medium flex-1 truncate mr-3 ${
-            match.winner === 'team_2' ? 'text-emerald-400' : isLive ? 'text-white' : 'text-cinema-text'
+          <span className={`text-sm font-medium ${
+            match.winner === 'team_2' ? 'text-emerald-400' : isFinished && match.winner === 'team_1' ? 'text-cinema-muted' : 'text-white'
           }`}>
             {team2}
           </span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 ml-3">
             {sets.map((s, i) => (
-              <span key={i} className={`w-7 text-center text-sm font-mono font-bold ${
+              <span key={i} className={`w-6 text-center text-sm font-mono font-bold ${
                 s.team2 > s.team1 ? 'text-emerald-400' : 'text-cinema-muted'
               }`}>
                 {s.team2}
               </span>
             ))}
-            {sets.length === 0 && isLive && (
-              <span className="text-red-400/60 text-xs italic">bezig</span>
-            )}
-            {sets.length === 0 && !isLive && <span className="text-cinema-muted text-sm">—</span>}
+            {sets.length === 0 && !isScheduled && <span className="text-cinema-muted text-xs">—</span>}
           </div>
         </div>
       </div>
-
-      {/* Live score note */}
-      {isLive && sets.length === 0 && (
-        <p className="text-[10px] text-cinema-muted text-center italic">
-          Live scores zijn beperkt beschikbaar via de API
-        </p>
-      )}
     </div>
   )
 }

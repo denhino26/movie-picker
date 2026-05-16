@@ -18,6 +18,7 @@ interface Match {
   id: number
   status: 'live' | 'finished' | 'scheduled' | string
   played_at: string
+  started_time?: string
   round: number
   round_name?: string
   category: 'men' | 'women' | string
@@ -109,6 +110,19 @@ function MatchCard({ match }: { match: Match }) {
   const isLive = match.status === 'live'
   const roundText = match.round_name ?? `Ronde ${match.round}`
 
+  // Calculate how long the match has been going
+  let durationText = ''
+  if (isLive && match.started_time) {
+    const startMs = new Date(match.started_time).getTime()
+    const nowMs = Date.now()
+    const diffMin = Math.round((nowMs - startMs) / 60000)
+    if (diffMin > 0 && diffMin < 600) {
+      const hrs = Math.floor(diffMin / 60)
+      const mins = diffMin % 60
+      durationText = hrs > 0 ? `${hrs}u ${mins}m` : `${mins}m`
+    }
+  }
+
   return (
     <div className={`bg-cinema-card rounded-xl border p-4 space-y-3 transition-all duration-200 ${
       isLive ? 'border-red-500/40 shadow-lg shadow-red-900/10' : 'border-white/5'
@@ -120,13 +134,18 @@ function MatchCard({ match }: { match: Match }) {
           <CategoryBadge category={match.category} />
           <span className="text-xs text-cinema-muted">{roundText}</span>
         </div>
-        {match.schedule_label ? (
-          <span className="text-xs text-cinema-muted">{match.schedule_label}</span>
-        ) : match.played_at?.includes('T') ? (
-          <span className="text-xs text-cinema-muted">{formatTime(match.played_at)}</span>
-        ) : (
-          <span className="text-xs text-cinema-muted">{formatDate(match.played_at)}</span>
-        )}
+        <div className="flex items-center gap-2 text-xs text-cinema-muted">
+          {isLive && durationText && (
+            <span className="text-red-400">⏱ {durationText}</span>
+          )}
+          {match.schedule_label ? (
+            <span>{match.schedule_label}</span>
+          ) : match.started_time ? (
+            <span>{formatTime(match.started_time)}</span>
+          ) : match.played_at?.includes('T') ? (
+            <span>{formatTime(match.played_at)}</span>
+          ) : null}
+        </div>
       </div>
 
       {/* Tournament */}
@@ -155,7 +174,10 @@ function MatchCard({ match }: { match: Match }) {
                 {s.team1}
               </span>
             ))}
-            {sets.length === 0 && <span className="text-cinema-muted text-sm">—</span>}
+            {sets.length === 0 && isLive && (
+              <span className="text-red-400/60 text-xs italic">bezig</span>
+            )}
+            {sets.length === 0 && !isLive && <span className="text-cinema-muted text-sm">—</span>}
           </div>
         </div>
 
@@ -176,10 +198,20 @@ function MatchCard({ match }: { match: Match }) {
                 {s.team2}
               </span>
             ))}
-            {sets.length === 0 && <span className="text-cinema-muted text-sm">—</span>}
+            {sets.length === 0 && isLive && (
+              <span className="text-red-400/60 text-xs italic">bezig</span>
+            )}
+            {sets.length === 0 && !isLive && <span className="text-cinema-muted text-sm">—</span>}
           </div>
         </div>
       </div>
+
+      {/* Live score note */}
+      {isLive && sets.length === 0 && (
+        <p className="text-[10px] text-cinema-muted text-center italic">
+          Live scores zijn beperkt beschikbaar via de API
+        </p>
+      )}
     </div>
   )
 }

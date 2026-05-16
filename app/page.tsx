@@ -56,7 +56,7 @@ export default function Home() {
               <span className="text-3xl">🏸</span>
             </div>
             <div className="text-center space-y-1">
-              <h2 className="text-xl font-bold text-white">Padel Kijken</h2>
+              <h2 className="text-xl font-bold text-white">Premier Padel</h2>
               <p className="text-cinema-muted text-sm">
                 Live standen &amp; programma
               </p>

@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 const BASE_URL = 'https://padelapi.org/api'
 const TOKEN = process.env.PADEL_API_TOKEN ?? ''
 
+// Only Premier Padel levels
+const PREMIER_LEVELS = ['Major', 'P1', 'P2']
+
 async function padelFetch(path: string, params?: Record<string, string>) {
   const url = new URL(`${BASE_URL}${path}`)
   if (params) {
@@ -44,6 +47,12 @@ export async function GET(request: NextRequest) {
     switch (endpoint) {
       case 'live': {
         const data = await padelFetch('/live')
+        // Filter live matches to Premier Padel only
+        if (data.data && Array.isArray(data.data)) {
+          data.data = data.data.filter((m: { tournament?: { level?: string } }) =>
+            m.tournament?.level && PREMIER_LEVELS.includes(m.tournament.level)
+          )
+        }
         return NextResponse.json(data)
       }
       case 'matches': {
@@ -54,6 +63,12 @@ export async function GET(request: NextRequest) {
         params.sort_by = 'played_at'
         params.order_by = 'desc'
         const data = await padelFetch('/matches', params)
+        // Filter matches to Premier Padel only
+        if (data.data && Array.isArray(data.data)) {
+          data.data = data.data.filter((m: { tournament?: { level?: string } }) =>
+            m.tournament?.level && PREMIER_LEVELS.includes(m.tournament.level)
+          )
+        }
         return NextResponse.json(data)
       }
       case 'tournaments': {
@@ -63,6 +78,12 @@ export async function GET(request: NextRequest) {
         params.sort_by = 'start_date'
         params.order_by = 'desc'
         const data = await padelFetch('/tournaments', params)
+        // Filter tournaments to Premier Padel only
+        if (data.data && Array.isArray(data.data)) {
+          data.data = data.data.filter((t: { level?: string }) =>
+            t.level && PREMIER_LEVELS.includes(t.level)
+          )
+        }
         return NextResponse.json(data)
       }
       default:

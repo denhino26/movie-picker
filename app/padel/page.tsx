@@ -254,7 +254,7 @@ export default function PadelPage() {
             <ArrowLeft size={14} /> Terug
           </Link>
           <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-            🏸 Padel Live
+            🏸 Premier Padel
           </h1>
           <p className="text-cinema-muted text-sm">
             Live standen &amp; programma

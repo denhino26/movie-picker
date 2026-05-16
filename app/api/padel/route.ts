@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 const BASE_URL = 'https://padelapi.org/api'
 const TOKEN = process.env.PADEL_API_TOKEN ?? ''
 
-// Only Premier Padel levels
-const PREMIER_LEVELS = ['Major', 'P1', 'P2']
+// Only Premier Padel levels (lowercase as returned by API)
+const PREMIER_LEVELS = ['major', 'p1', 'p2', 'finals']
 
 async function padelFetch(path: string, params?: Record<string, string>) {
   const url = new URL(`${BASE_URL}${path}`)
@@ -29,6 +29,59 @@ async function padelFetch(path: string, params?: Record<string, string>) {
   return res.json()
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+// Normalize API match to our frontend format
+function normalizeMatch(m: any, tournamentMap: Record<string, any>): any {
+  const tournPath = m.connections?.tournament ?? ''
+  const tournId = tournPath.split('/').pop()
+  const tourn = tournamentMap[tournId]
+
+  const team1Names = (m.players?.team_1 ?? []).map((p: any) => p.name).filter(Boolean)
+  const team2Names = (m.players?.team_2 ?? []).map((p: any) => p.name).filter(Boolean)
+
+  // Score: API returns array of {team_1: "6", team_2: "3"} or null
+  const sets = Array.isArray(m.score)
+    ? m.score.map((s: any) => ({ team1: parseInt(s.team_1) || 0, team2: parseInt(s.team_2) || 0 }))
+    : []
+
+  return {
+    id: m.id,
+    status: m.status === 'live' ? 'live' : m.status === 'finished' ? 'finished' : 'scheduled',
+    played_at: m.played_at,
+    round: m.round,
+    round_name: m.round_name,
+    category: m.category,
+    court: m.court,
+    schedule_label: m.schedule_label,
+    name: m.name,
+    winner: m.winner,
+    tournament: tourn
+      ? { name: tourn.name, level: tourn.level, location: tourn.location }
+      : { name: 'Premier Padel', level: 'unknown', location: '' },
+    teams: [
+      { players: team1Names.map((n: string) => ({ name: n })) },
+      { players: team2Names.map((n: string) => ({ name: n })) },
+    ],
+    score: { sets },
+  }
+}
+
+function normalizeTourn(t: any): any {
+  return {
+    id: t.id,
+    name: t.name,
+    location: t.location,
+    country: t.country,
+    level: t.level,
+    start_date: t.start_date,
+    end_date: t.end_date,
+    status: t.status === 'live' ? 'in_progress' : t.status,
+  }
+}
+
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const endpoint = searchParams.get('endpoint') ?? 'matches'
@@ -46,45 +99,65 @@ export async function GET(request: NextRequest) {
   try {
     switch (endpoint) {
       case 'live': {
+        // For live we don't have tournament info from /live endpoint easily,
+        // so we return all live matches (the /live endpoint is Premier-only if using Pro)
         const data = await padelFetch('/live')
-        // Filter live matches to Premier Padel only
-        if (data.data && Array.isArray(data.data)) {
-          data.data = data.data.filter((m: { tournament?: { level?: string } }) =>
-            m.tournament?.level && PREMIER_LEVELS.includes(m.tournament.level)
-          )
-        }
-        return NextResponse.json(data)
+        return NextResponse.json({ data: data.data ?? [] })
       }
       case 'matches': {
-        const params: Record<string, string> = {}
-        if (category) params.category = category
-        if (afterDate) params.after_date = afterDate
-        if (beforeDate) params.before_date = beforeDate
-        params.sort_by = 'played_at'
-        params.order_by = 'desc'
-        const data = await padelFetch('/matches', params)
-        // Filter matches to Premier Padel only
-        if (data.data && Array.isArray(data.data)) {
-          data.data = data.data.filter((m: { tournament?: { level?: string } }) =>
-            m.tournament?.level && PREMIER_LEVELS.includes(m.tournament.level)
-          )
+        // First fetch tournaments to build a lookup map
+        const [matchData, tournData] = await Promise.all([
+          padelFetch('/matches', {
+            ...(category && { category }),
+            ...(afterDate && { after_date: afterDate }),
+            ...(beforeDate && { before_date: beforeDate }),
+            sort_by: 'played_at',
+            order_by: 'desc',
+          }),
+          padelFetch('/tournaments', {
+            ...(afterDate && { after_date: afterDate }),
+            ...(beforeDate && { before_date: beforeDate }),
+          }),
+        ])
+
+        // Build tournament lookup (id -> tournament)
+        const tournMap: Record<string, any> = {} // eslint-disable-line @typescript-eslint/no-explicit-any
+        for (const t of (tournData.data ?? [])) {
+          tournMap[String(t.id)] = t
         }
-        return NextResponse.json(data)
+
+        // Filter matches: only those linked to Premier Padel tournaments
+        const premierTournIds = new Set(
+          Object.entries(tournMap)
+            .filter(([, t]) => PREMIER_LEVELS.includes(t.level))
+            .map(([id]) => id)
+        )
+
+        const matches = (matchData.data ?? [])
+          .filter((m: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+            const tournPath = m.connections?.tournament ?? ''
+            const tournId = tournPath.split('/').pop()
+            return premierTournIds.has(tournId)
+          })
+          .map((m: any) => normalizeMatch(m, tournMap)) // eslint-disable-line @typescript-eslint/no-explicit-any
+
+        return NextResponse.json({ data: matches })
       }
       case 'tournaments': {
-        const params: Record<string, string> = {}
+        const params: Record<string, string> = {
+          sort_by: 'start_date',
+          order_by: 'asc',
+        }
         if (afterDate) params.after_date = afterDate
         if (beforeDate) params.before_date = beforeDate
-        params.sort_by = 'start_date'
-        params.order_by = 'desc'
+
         const data = await padelFetch('/tournaments', params)
-        // Filter tournaments to Premier Padel only
-        if (data.data && Array.isArray(data.data)) {
-          data.data = data.data.filter((t: { level?: string }) =>
-            t.level && PREMIER_LEVELS.includes(t.level)
-          )
-        }
-        return NextResponse.json(data)
+
+        const tournaments = (data.data ?? [])
+          .filter((t: any) => PREMIER_LEVELS.includes(t.level)) // eslint-disable-line @typescript-eslint/no-explicit-any
+          .map(normalizeTourn)
+
+        return NextResponse.json({ data: tournaments })
       }
       default:
         return NextResponse.json({ error: 'Unknown endpoint' }, { status: 400 })
@@ -99,114 +172,14 @@ export async function GET(request: NextRequest) {
 }
 
 function getMockData(endpoint: string) {
-  if (endpoint === 'live') {
-    return []
-  }
-
+  if (endpoint === 'live') return []
   if (endpoint === 'tournaments') {
     return [
-      {
-        id: 1,
-        name: 'Premier Padel Major — Madrid',
-        location: 'Madrid, Spain',
-        level: 'Major',
-        start_date: '2026-05-12',
-        end_date: '2026-05-18',
-        status: 'in_progress',
-        category: 'men',
-      },
-      {
-        id: 2,
-        name: 'Premier Padel P1 — Milano',
-        location: 'Milano, Italy',
-        level: 'P1',
-        start_date: '2026-05-19',
-        end_date: '2026-05-25',
-        status: 'upcoming',
-        category: 'men',
-      },
-      {
-        id: 3,
-        name: 'Premier Padel P2 — Amsterdam',
-        location: 'Amsterdam, Netherlands',
-        level: 'P2',
-        start_date: '2026-06-02',
-        end_date: '2026-06-08',
-        status: 'upcoming',
-        category: 'men',
-      },
+      { id: 1, name: 'Kuwait P1 2026', location: 'Kuwait City', country: 'KW', level: 'p1', start_date: '2026-10-26', end_date: '2026-10-31', status: 'pending' },
+      { id: 2, name: 'Dubai P1 2026', location: 'Dubai', country: 'AE', level: 'p1', start_date: '2026-11-09', end_date: '2026-11-15', status: 'pending' },
+      { id: 3, name: 'Mexico Major 2026', location: 'Mexico City', country: 'MX', level: 'major', start_date: '2026-11-23', end_date: '2026-11-29', status: 'pending' },
+      { id: 4, name: 'Barcelona Finals 2026', location: 'Barcelona', country: 'ES', level: 'finals', start_date: '2026-12-07', end_date: '2026-12-13', status: 'pending' },
     ]
   }
-
-  // matches
-  return [
-    {
-      id: 101,
-      status: 'live',
-      played_at: new Date().toISOString(),
-      round: 8,
-      category: 'men',
-      tournament: { name: 'Premier Padel Major — Madrid', level: 'Major' },
-      teams: [
-        { players: [{ name: 'Arturo Coello' }, { name: 'Agustín Tapia' }] },
-        { players: [{ name: 'Alejandro Galán' }, { name: 'Federico Chingotto' }] },
-      ],
-      score: {
-        sets: [
-          { team1: 6, team2: 4 },
-          { team1: 3, team2: 6 },
-          { team1: 2, team2: 1 },
-        ],
-      },
-    },
-    {
-      id: 102,
-      status: 'live',
-      played_at: new Date().toISOString(),
-      round: 8,
-      category: 'women',
-      tournament: { name: 'Premier Padel Major — Madrid', level: 'Major' },
-      teams: [
-        { players: [{ name: 'Ariana Sánchez' }, { name: 'Paula Josemaría' }] },
-        { players: [{ name: 'Gemma Triay' }, { name: 'Claudia Fernández' }] },
-      ],
-      score: {
-        sets: [
-          { team1: 7, team2: 5 },
-          { team1: 4, team2: 4 },
-        ],
-      },
-    },
-    {
-      id: 103,
-      status: 'finished',
-      played_at: new Date(Date.now() - 3600000).toISOString(),
-      round: 16,
-      category: 'men',
-      tournament: { name: 'Premier Padel Major — Madrid', level: 'Major' },
-      teams: [
-        { players: [{ name: 'Juan Lebrón' }, { name: 'Paquito Navarro' }] },
-        { players: [{ name: 'Martín Di Nenno' }, { name: 'Franco Stupaczuk' }] },
-      ],
-      score: {
-        sets: [
-          { team1: 6, team2: 3 },
-          { team1: 6, team2: 4 },
-        ],
-      },
-    },
-    {
-      id: 104,
-      status: 'scheduled',
-      played_at: new Date(Date.now() + 7200000).toISOString(),
-      round: 8,
-      category: 'men',
-      tournament: { name: 'Premier Padel Major — Madrid', level: 'Major' },
-      teams: [
-        { players: [{ name: 'Fernando Belasteguín' }, { name: 'Sanyo Gutiérrez' }] },
-        { players: [{ name: 'Ale Galán' }, { name: 'Juan Cruz Belluati' }] },
-      ],
-      score: { sets: [] },
-    },
-  ]
+  return []
 }

@@ -19,8 +19,13 @@ interface Match {
   status: 'live' | 'finished' | 'scheduled' | string
   played_at: string
   round: number
+  round_name?: string
   category: 'men' | 'women' | string
-  tournament: { name: string; level: string }
+  court?: string
+  schedule_label?: string
+  name?: string
+  winner?: string
+  tournament: { name: string; level: string; location?: string }
   teams: Team[]
   score: { sets: SetScore[] }
 }
@@ -28,29 +33,36 @@ interface Tournament {
   id: number
   name: string
   location: string
+  country?: string
   level: string
   start_date: string
   end_date: string
   status: string
-  category: string
 }
 
 type Tab = 'live' | 'schedule' | 'tournaments'
 
-function roundLabel(round: number): string {
-  const labels: Record<number, string> = {
-    1: 'Finale', 2: 'Halve finale', 4: 'Kwartfinale',
-    8: 'Achtste finale', 16: 'Ronde van 32', 32: 'Ronde van 64',
-  }
-  return labels[round] ?? `Ronde ${round}`
+const LEVEL_LABELS: Record<string, string> = {
+  major: 'Major',
+  p1: 'P1',
+  p2: 'P2',
+  finals: 'Finals',
 }
 
 function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    return d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+  } catch { return dateStr }
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+  } catch { return dateStr }
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -89,10 +101,13 @@ function CategoryBadge({ category }: { category: string }) {
 }
 
 function MatchCard({ match }: { match: Match }) {
-  const team1 = match.teams?.[0]?.players?.map(p => p.name).join(' / ') ?? 'TBD'
-  const team2 = match.teams?.[1]?.players?.map(p => p.name).join(' / ') ?? 'TBD'
+  const team1Players = match.teams?.[0]?.players ?? []
+  const team2Players = match.teams?.[1]?.players ?? []
+  const team1 = team1Players.length > 0 ? team1Players.map(p => p.name).join(' / ') : 'TBD'
+  const team2 = team2Players.length > 0 ? team2Players.map(p => p.name).join(' / ') : 'TBD'
   const sets = match.score?.sets ?? []
   const isLive = match.status === 'live'
+  const roundText = match.round_name ?? `Ronde ${match.round}`
 
   return (
     <div className={`bg-cinema-card rounded-xl border p-4 space-y-3 transition-all duration-200 ${
@@ -103,24 +118,33 @@ function MatchCard({ match }: { match: Match }) {
         <div className="flex items-center gap-2 flex-wrap">
           <StatusBadge status={match.status} />
           <CategoryBadge category={match.category} />
-          <span className="text-xs text-cinema-muted">{roundLabel(match.round)}</span>
+          <span className="text-xs text-cinema-muted">{roundText}</span>
         </div>
-        <span className="text-xs text-cinema-muted">
-          {match.status === 'scheduled' ? formatTime(match.played_at) : formatTime(match.played_at)}
-        </span>
+        {match.schedule_label ? (
+          <span className="text-xs text-cinema-muted">{match.schedule_label}</span>
+        ) : match.played_at?.includes('T') ? (
+          <span className="text-xs text-cinema-muted">{formatTime(match.played_at)}</span>
+        ) : (
+          <span className="text-xs text-cinema-muted">{formatDate(match.played_at)}</span>
+        )}
       </div>
 
       {/* Tournament */}
       <div className="flex items-center gap-1.5">
         <Trophy size={12} className="text-amber-400 shrink-0" />
         <span className="text-xs text-amber-400 truncate">{match.tournament?.name}</span>
+        {match.court && (
+          <span className="text-xs text-cinema-muted ml-auto shrink-0">📍 {match.court}</span>
+        )}
       </div>
 
       {/* Score board */}
       <div className="bg-cinema-surface rounded-lg p-3 space-y-2">
         {/* Team 1 */}
         <div className="flex items-center justify-between">
-          <span className={`text-sm font-medium flex-1 truncate mr-3 ${isLive ? 'text-white' : 'text-cinema-text'}`}>
+          <span className={`text-sm font-medium flex-1 truncate mr-3 ${
+            match.winner === 'team_1' ? 'text-emerald-400' : isLive ? 'text-white' : 'text-cinema-text'
+          }`}>
             {team1}
           </span>
           <div className="flex gap-2">
@@ -131,7 +155,7 @@ function MatchCard({ match }: { match: Match }) {
                 {s.team1}
               </span>
             ))}
-            {match.status === 'scheduled' && <span className="text-cinema-muted text-sm">—</span>}
+            {sets.length === 0 && <span className="text-cinema-muted text-sm">—</span>}
           </div>
         </div>
 
@@ -139,7 +163,9 @@ function MatchCard({ match }: { match: Match }) {
 
         {/* Team 2 */}
         <div className="flex items-center justify-between">
-          <span className={`text-sm font-medium flex-1 truncate mr-3 ${isLive ? 'text-white' : 'text-cinema-text'}`}>
+          <span className={`text-sm font-medium flex-1 truncate mr-3 ${
+            match.winner === 'team_2' ? 'text-emerald-400' : isLive ? 'text-white' : 'text-cinema-text'
+          }`}>
             {team2}
           </span>
           <div className="flex gap-2">
@@ -150,7 +176,7 @@ function MatchCard({ match }: { match: Match }) {
                 {s.team2}
               </span>
             ))}
-            {match.status === 'scheduled' && <span className="text-cinema-muted text-sm">—</span>}
+            {sets.length === 0 && <span className="text-cinema-muted text-sm">—</span>}
           </div>
         </div>
       </div>
@@ -159,7 +185,8 @@ function MatchCard({ match }: { match: Match }) {
 }
 
 function TournamentCard({ tournament }: { tournament: Tournament }) {
-  const isActive = tournament.status === 'in_progress'
+  const isActive = tournament.status === 'in_progress' || tournament.status === 'live'
+  const levelLabel = LEVEL_LABELS[tournament.level] ?? tournament.level
   return (
     <div className={`bg-cinema-card rounded-xl border p-4 space-y-2 ${
       isActive ? 'border-emerald-500/40' : 'border-white/5'
@@ -176,8 +203,10 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         )}
       </div>
       <div className="flex items-center gap-3 text-xs text-cinema-muted">
-        <span>📍 {tournament.location}</span>
-        <span>🏆 {tournament.level}</span>
+        <span>📍 {tournament.location}{tournament.country ? ` (${tournament.country})` : ''}</span>
+        <span className="px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-300 border border-amber-700/20">
+          {levelLabel}
+        </span>
       </div>
       <div className="text-xs text-cinema-muted">
         📅 {formatDate(tournament.start_date)} – {formatDate(tournament.end_date)}
@@ -198,21 +227,19 @@ export default function PadelPage() {
     setLoading(true)
     try {
       const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
-      const weekAhead = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
+      const weekAhead = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]
+      const yearEnd = new Date().getFullYear() + '-12-31'
 
       const [matchRes, tournRes] = await Promise.all([
         fetch(`/api/padel?endpoint=matches&after_date=${weekAgo}&before_date=${weekAhead}`),
-        fetch(`/api/padel?endpoint=tournaments&after_date=${weekAgo}&before_date=${weekAhead}`),
+        fetch(`/api/padel?endpoint=tournaments&after_date=${weekAgo}&before_date=${yearEnd}`),
       ])
 
       const matchData = await matchRes.json()
       const tournData = await tournRes.json()
 
-      const matchList = matchData.data ?? matchData.mock_data ?? matchData ?? []
-      const tournList = tournData.data ?? tournData.mock_data ?? tournData ?? []
-
-      setMatches(Array.isArray(matchList) ? matchList : [])
-      setTournaments(Array.isArray(tournList) ? tournList : [])
+      setMatches(Array.isArray(matchData.data) ? matchData.data : [])
+      setTournaments(Array.isArray(tournData.data) ? tournData.data : [])
       setIsMock(!!matchData.mock || !!tournData.mock)
       setLastRefresh(new Date())
     } catch {
@@ -225,7 +252,7 @@ export default function PadelPage() {
 
   useEffect(() => {
     fetchData()
-    const interval = setInterval(fetchData, 60000) // refresh every minute
+    const interval = setInterval(fetchData, 60000)
     return () => clearInterval(interval)
   }, [fetchData])
 
@@ -236,9 +263,11 @@ export default function PadelPage() {
     (a, b) => new Date(a.played_at).getTime() - new Date(b.played_at).getTime()
   )
 
+  const noMatchesAtAll = matches.length === 0 && !loading
+
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'live', label: '🔴 Live', count: liveMatches.length },
-    { key: 'schedule', label: '📅 Programma', count: upcomingMatches.length },
+    { key: 'schedule', label: '📅 Programma', count: scheduledMatches.length + finishedMatches.length },
     { key: 'tournaments', label: '🏆 Toernooien', count: tournaments.length },
   ]
 
@@ -288,7 +317,7 @@ export default function PadelPage() {
         {/* Refresh bar */}
         <div className="flex items-center justify-between text-xs text-cinema-muted">
           <span>
-            Laatst bijgewerkt: {lastRefresh.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+            Bijgewerkt: {lastRefresh.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
             {isMock && ' (demo data)'}
           </span>
           <button
@@ -302,7 +331,7 @@ export default function PadelPage() {
         </div>
 
         {/* Loading */}
-        {loading && matches.length === 0 && (
+        {loading && matches.length === 0 && tournaments.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-4 py-16">
             <div className="relative w-16 h-16">
               <div className="absolute inset-0 rounded-full border-4 border-cinema-card" />
@@ -310,7 +339,7 @@ export default function PadelPage() {
               <div className="absolute inset-0 flex items-center justify-center text-2xl">🏸</div>
             </div>
             <p className="text-cinema-text text-lg font-medium animate-pulse">
-              Padel data laden...
+              Premier Padel laden...
             </p>
           </div>
         )}
@@ -325,7 +354,10 @@ export default function PadelPage() {
                 <div className="text-5xl">😴</div>
                 <h3 className="text-lg font-semibold text-white">Geen live wedstrijden</h3>
                 <p className="text-cinema-muted text-sm">
-                  Er worden momenteel geen padel wedstrijden gespeeld.
+                  {noMatchesAtAll
+                    ? 'Er is momenteel geen Premier Padel toernooi bezig. Bekijk de toernooien tab voor het komende programma.'
+                    : 'Er worden momenteel geen wedstrijden gespeeld.'
+                  }
                 </p>
                 {finishedMatches.length > 0 && (
                   <div className="pt-4 space-y-3">
@@ -335,6 +367,15 @@ export default function PadelPage() {
                     {finishedMatches.slice(0, 3).map(m => <MatchCard key={m.id} match={m} />)}
                   </div>
                 )}
+                {noMatchesAtAll && tournaments.length > 0 && (
+                  <button
+                    onClick={() => setTab('tournaments')}
+                    className="mt-4 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm
+                               transition-all duration-200 active:scale-95 shadow-lg shadow-emerald-900/40"
+                  >
+                    Bekijk komende toernooien →
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -343,7 +384,6 @@ export default function PadelPage() {
         {/* Schedule tab */}
         {!loading && tab === 'schedule' && (
           <div className="space-y-3 animate-fade-in">
-            {/* Show live matches first if any */}
             {liveMatches.length > 0 && (
               <>
                 <p className="text-xs font-medium text-red-400 uppercase tracking-wider">Nu bezig</p>
@@ -357,22 +397,21 @@ export default function PadelPage() {
                 <p className="text-xs font-medium text-cinema-muted uppercase tracking-wider">Komende wedstrijden</p>
                 {upcomingMatches.map(m => <MatchCard key={m.id} match={m} />)}
               </>
-            ) : (
-              <div className="text-center py-12 space-y-3">
+            ) : !noMatchesAtAll ? null : (
+              <div className="text-center py-8 space-y-3">
                 <div className="text-5xl">📅</div>
                 <h3 className="text-lg font-semibold text-white">Geen geplande wedstrijden</h3>
                 <p className="text-cinema-muted text-sm">
-                  Er staan deze week geen wedstrijden gepland.
+                  Er is momenteel geen Premier Padel toernooi bezig.
                 </p>
               </div>
             )}
 
-            {/* Recent results */}
             {finishedMatches.length > 0 && (
               <>
                 <div className="border-t border-white/5 mt-4" />
                 <p className="text-xs font-medium text-cinema-muted uppercase tracking-wider">Recente uitslagen</p>
-                {finishedMatches.slice(0, 5).map(m => <MatchCard key={m.id} match={m} />)}
+                {finishedMatches.slice(0, 10).map(m => <MatchCard key={m.id} match={m} />)}
               </>
             )}
           </div>
@@ -388,7 +427,7 @@ export default function PadelPage() {
                 <div className="text-5xl">🏆</div>
                 <h3 className="text-lg font-semibold text-white">Geen toernooien gevonden</h3>
                 <p className="text-cinema-muted text-sm">
-                  Er zijn momenteel geen actieve of komende toernooien.
+                  Er zijn geen komende Premier Padel toernooien gevonden.
                 </p>
               </div>
             )}

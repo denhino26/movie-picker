@@ -104,7 +104,9 @@ export async function GET(request: NextRequest) {
   const language       = searchParams.get('language') ?? 'en'
   const yearRangesRaw  = (searchParams.get('yearRanges') ?? '').split(',').filter(Boolean) as YearRangeKey[]
   const dateRange      = computeDateRange(yearRangesRaw)
-  const sortByNew      = yearRangesRaw.includes('nieuw')
+  const sortMode       = yearRangesRaw.includes('populair') ? 'popular' as const
+                       : yearRangesRaw.includes('nieuw') ? 'new' as const
+                       : 'rating' as const
 
   const rawGenres = genreParam.split(',').filter(Boolean)
   const genres = rawGenres.filter((g): g is GenreName =>
@@ -117,8 +119,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const data = type === 'serie'
-      ? await fetchSeries(genres, Number(pageParam), dateRange, language, sortByNew)
-      : await fetchFilms(genres, Number(pageParam), dateRange, language, sortByNew)
+      ? await fetchSeries(genres, Number(pageParam), dateRange, language, sortMode)
+      : await fetchFilms(genres, Number(pageParam), dateRange, language, sortMode)
     return NextResponse.json(data)
   } catch (err) {
     console.error('TMDB fetch failed:', err)

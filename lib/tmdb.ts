@@ -16,16 +16,21 @@ export function buildFilmUrl(
   page = 1,
   dateRange?: DateRange,
   language?: string,
-  sortByNew = false
+  sortMode: 'rating' | 'new' | 'popular' = 'rating'
 ): string {
   const genreIds       = Array.from(new Set(genres.flatMap((g) => FILM_GENRE_MAP[g] ?? [])))
   const includesZombie = genres.includes('zombie')
   const includesAdult  = genres.includes('18+')
 
+  const sortBy = sortMode === 'new' ? 'primary_release_date.desc'
+    : sortMode === 'popular' ? 'popularity.desc'
+    : 'vote_average.desc'
+  const minVotes = sortMode === 'new' ? '10' : sortMode === 'popular' ? '50' : '100'
+
   const params = new URLSearchParams({
     language:         'nl-NL',
-    sort_by:          sortByNew ? 'primary_release_date.desc' : 'vote_average.desc',
-    'vote_count.gte': sortByNew ? '10' : '100',
+    sort_by:          sortBy,
+    'vote_count.gte': minVotes,
     include_adult:    includesAdult ? 'true' : 'false',
     page:             String(page),
   })
@@ -48,15 +53,20 @@ export function buildSerieUrl(
   page = 1,
   dateRange?: DateRange,
   language?: string,
-  sortByNew = false
+  sortMode: 'rating' | 'new' | 'popular' = 'rating'
 ): string {
   const genreIds      = Array.from(new Set(genres.flatMap((g) => SERIE_GENRE_MAP[g] ?? [])))
   const includesAdult = genres.includes('18+')
 
+  const sortBy = sortMode === 'new' ? 'first_air_date.desc'
+    : sortMode === 'popular' ? 'popularity.desc'
+    : 'vote_average.desc'
+  const minVotes = sortMode === 'new' ? '5' : sortMode === 'popular' ? '20' : '50'
+
   const params = new URLSearchParams({
     language:         'nl-NL',
-    sort_by:          sortByNew ? 'first_air_date.desc' : 'vote_average.desc',
-    'vote_count.gte': sortByNew ? '5' : '50',
+    sort_by:          sortBy,
+    'vote_count.gte': minVotes,
     include_adult:    includesAdult ? 'true' : 'false',
     page:             String(page),
   })
@@ -78,9 +88,9 @@ export async function fetchFilms(
   page = 1,
   dateRange?: DateRange,
   language?: string,
-  sortByNew = false
+  sortMode: 'rating' | 'new' | 'popular' = 'rating'
 ): Promise<TMDBResponse> {
-  const url = buildFilmUrl(genres, page, dateRange, language, sortByNew)
+  const url = buildFilmUrl(genres, page, dateRange, language, sortMode)
   const res = await fetch(url, { headers: getHeaders(), next: { revalidate: 3600 } })
   if (!res.ok) throw new Error(`TMDB films error: ${res.status}`)
   return res.json() as Promise<TMDBResponse>
@@ -91,9 +101,9 @@ export async function fetchSeries(
   page = 1,
   dateRange?: DateRange,
   language?: string,
-  sortByNew = false
+  sortMode: 'rating' | 'new' | 'popular' = 'rating'
 ): Promise<TMDBResponse> {
-  const url = buildSerieUrl(genres, page, dateRange, language, sortByNew)
+  const url = buildSerieUrl(genres, page, dateRange, language, sortMode)
   const res = await fetch(url, { headers: getHeaders(), next: { revalidate: 3600 } })
   if (!res.ok) throw new Error(`TMDB series error: ${res.status}`)
   return res.json() as Promise<TMDBResponse>

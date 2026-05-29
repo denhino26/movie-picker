@@ -70,7 +70,7 @@ export default function Home() {
 
   const toggleYearRange = (key: YearRangeKey) => {
     setYearRanges((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      prev.includes(key) ? [] : [key]
     )
   }
 
@@ -83,7 +83,7 @@ export default function Home() {
 
   const toggleGenre = (genre: GenreName) => {
     setSelectedGenres((prev) =>
-      prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre]
+      prev.includes(genre) ? [] : [genre]
     )
   }
 

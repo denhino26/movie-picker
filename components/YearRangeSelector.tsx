@@ -16,10 +16,9 @@ export default function YearRangeSelector({ selected, onToggle, disabled, uiLang
     <div className="space-y-2">
       <p className="text-xs font-medium text-cinema-muted uppercase tracking-wider text-center">
         {T('period')}
-        {selected.length > 0
-          ? <span className="normal-case italic ml-2">({selected.length} {T('periodSelected')})</span>
-          : <span className="normal-case italic ml-2">({T('allYears')})</span>
-        }
+        {selected.length === 0 && (
+          <span className="normal-case italic ml-2">({T('allYears')})</span>
+        )}
       </p>
       <div className="flex flex-wrap gap-2 justify-center">
         {ALL_YEAR_RANGES.map((key) => {

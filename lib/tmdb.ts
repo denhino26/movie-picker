@@ -1,4 +1,4 @@
-import { GenreName, FILM_GENRE_MAP, SERIE_GENRE_MAP, TMDBResponse, ZOMBIE_KEYWORD_ID } from '@/types/movie'
+import { GenreName, FILM_GENRE_MAP, SERIE_GENRE_MAP, TMDBResponse, ZOMBIE_KEYWORD_ID, EROTIC_KEYWORD_ID } from '@/types/movie'
 
 const BASE_URL = 'https://api.themoviedb.org/3'
 
@@ -20,7 +20,8 @@ export function buildFilmUrl(
 ): string {
   const genreIds       = Array.from(new Set(genres.flatMap((g) => FILM_GENRE_MAP[g] ?? [])))
   const includesZombie = genres.includes('zombie')
-  const includesAdult  = genres.includes('18+')
+  const includesSexy   = genres.includes('sexy')
+  const includesAdult  = genres.includes('18+') || includesSexy
 
   const sortBy = sortMode === 'new' ? 'primary_release_date.desc'
     : sortMode === 'popular' ? 'popularity.desc'
@@ -36,7 +37,10 @@ export function buildFilmUrl(
   })
 
   if (genreIds.length > 0)  params.set('with_genres', genreIds.join(','))
-  if (includesZombie)       params.set('with_keywords', String(ZOMBIE_KEYWORD_ID))
+  const keywords: number[] = []
+  if (includesZombie)       keywords.push(ZOMBIE_KEYWORD_ID)
+  if (includesSexy)         keywords.push(EROTIC_KEYWORD_ID)
+  if (keywords.length > 0)  params.set('with_keywords', keywords.join(','))
   if (includesAdult) {
     params.set('certification_country', 'US')
     params.set('certification.gte',     'R')
@@ -56,7 +60,8 @@ export function buildSerieUrl(
   sortMode: 'rating' | 'new' | 'popular' = 'rating'
 ): string {
   const genreIds      = Array.from(new Set(genres.flatMap((g) => SERIE_GENRE_MAP[g] ?? [])))
-  const includesAdult = genres.includes('18+')
+  const includesSexy  = genres.includes('sexy')
+  const includesAdult = genres.includes('18+') || includesSexy
 
   const sortBy = sortMode === 'new' ? 'first_air_date.desc'
     : sortMode === 'popular' ? 'popularity.desc'
@@ -72,6 +77,7 @@ export function buildSerieUrl(
   })
 
   if (genreIds.length > 0)  params.set('with_genres', genreIds.join(','))
+  if (includesSexy)         params.set('with_keywords', String(EROTIC_KEYWORD_ID))
   if (includesAdult) {
     params.set('certification_country', 'US')
     params.set('certification.gte',     'TV-MA')

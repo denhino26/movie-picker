@@ -117,7 +117,7 @@ export const GENRE_LABELS: Record<GenreName, string> = {
 export const ZOMBIE_KEYWORD_ID = 190370
 
 // ── Year ranges (multi-select) ──────────────────────────────────────────────
-export type YearRangeKey = 'recent' | '2010s' | '2000s' | '1990s' | '1980s' | 'classic'
+export type YearRangeKey = 'nieuw' | 'recent' | '2010s' | '2000s' | '1990s' | '1980s' | 'classic'
 
 export interface YearRangeOption {
   label: string
@@ -126,6 +126,7 @@ export interface YearRangeOption {
 }
 
 export const YEAR_RANGES: Record<YearRangeKey, YearRangeOption> = {
+  nieuw:   { label: '🔥 Net uit',     gte: 'NIEUW' },
   recent:  { label: '🆕 2020 – nu',   gte: '2020-01-01' },
   '2010s': { label: '📅 2010 – 2019', gte: '2010-01-01', lte: '2019-12-31' },
   '2000s': { label: '📅 2000 – 2009', gte: '2000-01-01', lte: '2009-12-31' },
@@ -135,12 +136,24 @@ export const YEAR_RANGES: Record<YearRangeKey, YearRangeOption> = {
 }
 
 export const ALL_YEAR_RANGES: YearRangeKey[] = [
-  'recent', '2010s', '2000s', '1990s', '1980s', 'classic',
+  'nieuw', 'recent', '2010s', '2000s', '1990s', '1980s', 'classic',
 ]
 
 // When multiple ranges are selected, compute the overall min/max window
 export function computeDateRange(selected: YearRangeKey[]): { gte?: string; lte?: string } {
   if (selected.length === 0) return {}
+
+  // Special case: "nieuw" = last 3 months up to 2 weeks ahead
+  if (selected.includes('nieuw')) {
+    const now = new Date()
+    const threeMonthsAgo = new Date(now.getTime() - 90 * 86400000)
+    const twoWeeksAhead = new Date(now.getTime() + 14 * 86400000)
+    return {
+      gte: threeMonthsAgo.toISOString().split('T')[0],
+      lte: twoWeeksAhead.toISOString().split('T')[0],
+    }
+  }
+
   const ranges = selected.map((k) => YEAR_RANGES[k])
   const gtes   = ranges.filter((r) => r.gte).map((r) => r.gte!)
   const ltes   = ranges.filter((r) => r.lte).map((r) => r.lte!)

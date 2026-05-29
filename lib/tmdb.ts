@@ -15,7 +15,8 @@ export function buildFilmUrl(
   genres: GenreName[],
   page = 1,
   dateRange?: DateRange,
-  language?: string
+  language?: string,
+  sortByNew = false
 ): string {
   const genreIds       = Array.from(new Set(genres.flatMap((g) => FILM_GENRE_MAP[g] ?? [])))
   const includesZombie = genres.includes('zombie')
@@ -23,8 +24,8 @@ export function buildFilmUrl(
 
   const params = new URLSearchParams({
     language:         'nl-NL',
-    sort_by:          'vote_average.desc',
-    'vote_count.gte': '100',
+    sort_by:          sortByNew ? 'primary_release_date.desc' : 'vote_average.desc',
+    'vote_count.gte': sortByNew ? '10' : '100',
     include_adult:    includesAdult ? 'true' : 'false',
     page:             String(page),
   })
@@ -46,15 +47,16 @@ export function buildSerieUrl(
   genres: GenreName[],
   page = 1,
   dateRange?: DateRange,
-  language?: string
+  language?: string,
+  sortByNew = false
 ): string {
   const genreIds      = Array.from(new Set(genres.flatMap((g) => SERIE_GENRE_MAP[g] ?? [])))
   const includesAdult = genres.includes('18+')
 
   const params = new URLSearchParams({
     language:         'nl-NL',
-    sort_by:          'vote_average.desc',
-    'vote_count.gte': '50',
+    sort_by:          sortByNew ? 'first_air_date.desc' : 'vote_average.desc',
+    'vote_count.gte': sortByNew ? '5' : '50',
     include_adult:    includesAdult ? 'true' : 'false',
     page:             String(page),
   })
@@ -75,9 +77,10 @@ export async function fetchFilms(
   genres: GenreName[],
   page = 1,
   dateRange?: DateRange,
-  language?: string
+  language?: string,
+  sortByNew = false
 ): Promise<TMDBResponse> {
-  const url = buildFilmUrl(genres, page, dateRange, language)
+  const url = buildFilmUrl(genres, page, dateRange, language, sortByNew)
   const res = await fetch(url, { headers: getHeaders(), next: { revalidate: 3600 } })
   if (!res.ok) throw new Error(`TMDB films error: ${res.status}`)
   return res.json() as Promise<TMDBResponse>
@@ -87,9 +90,10 @@ export async function fetchSeries(
   genres: GenreName[],
   page = 1,
   dateRange?: DateRange,
-  language?: string
+  language?: string,
+  sortByNew = false
 ): Promise<TMDBResponse> {
-  const url = buildSerieUrl(genres, page, dateRange, language)
+  const url = buildSerieUrl(genres, page, dateRange, language, sortByNew)
   const res = await fetch(url, { headers: getHeaders(), next: { revalidate: 3600 } })
   if (!res.ok) throw new Error(`TMDB series error: ${res.status}`)
   return res.json() as Promise<TMDBResponse>

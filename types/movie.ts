@@ -25,7 +25,7 @@ export type GenreName =
   | 'drama' | 'actie' | 'spanning' | 'horror' | 'zombie'
   | 'comedy' | 'romance' | 'sci-fi' | 'thriller'
   | 'tekenfilm' | 'avontuur' | 'fantasy' | 'misdaad'
-  | 'documentaire' | 'familie' | 'muziek' | 'western' | 'oorlog' | '18+' | 'sexy'
+  | 'documentaire' | 'familie' | 'muziek' | 'western' | 'oorlog' | '18+' | 'sexy' | 'porno'
   | 'sci-fi-fantasy' | 'mystery' | 'reality'
 
 export type AppPhase =
@@ -40,13 +40,13 @@ export const FILM_GENRES: GenreName[] = [
   'actie', 'drama', 'comedy', 'horror', 'thriller',
   'sci-fi', 'avontuur', 'fantasy', 'romance', 'misdaad',
   'mystery', 'tekenfilm', 'familie', 'spanning', 'zombie',
-  'documentaire', 'muziek', 'western', 'oorlog', '18+', 'sexy',
+  'documentaire', 'muziek', 'western', 'oorlog', '18+', 'sexy', 'porno',
 ]
 
 export const SERIE_GENRES: GenreName[] = [
   'drama', 'actie', 'comedy', 'misdaad', 'sci-fi-fantasy',
   'tekenfilm', 'familie', 'mystery', 'documentaire', 'reality',
-  'spanning', 'romance', 'horror', '18+', 'sexy',
+  'spanning', 'romance', 'horror', '18+', 'sexy', 'porno',
 ]
 
 export const FILM_GENRE_MAP: Partial<Record<GenreName, number[]>> = {
@@ -71,6 +71,7 @@ export const FILM_GENRE_MAP: Partial<Record<GenreName, number[]>> = {
   oorlog:       [10752],
   '18+':        [],
   sexy:         [10749],
+  porno:        [],
 }
 
 export const SERIE_GENRE_MAP: Partial<Record<GenreName, number[]>> = {
@@ -89,6 +90,7 @@ export const SERIE_GENRE_MAP: Partial<Record<GenreName, number[]>> = {
   horror:          [27],
   '18+':           [],
   sexy:            [10749],
+  porno:           [],
 }
 
 export const GENRE_LABELS: Record<GenreName, string> = {
@@ -112,6 +114,7 @@ export const GENRE_LABELS: Record<GenreName, string> = {
   oorlog:          '⚔️ Oorlog',
   '18+':           '🔞 18+',
   sexy:            '💋 Sexy',
+  porno:           '🍑 Porno',
   'sci-fi-fantasy':'🚀 Sci-Fi & Fantasy',
   mystery:         '🔍 Mystery',
   reality:         '📺 Reality',
@@ -119,6 +122,7 @@ export const GENRE_LABELS: Record<GenreName, string> = {
 
 export const ZOMBIE_KEYWORD_ID = 190370
 export const EROTIC_KEYWORD_ID = 6054
+export const PORN_KEYWORD_ID = 155438
 
 // ── Year ranges (multi-select) ──────────────────────────────────────────────
 export type YearRangeKey = 'populair' | 'nieuw' | 'recent' | '2010s' | '2000s' | '1990s' | '1980s' | 'classic'

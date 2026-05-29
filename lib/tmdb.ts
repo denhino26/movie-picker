@@ -1,4 +1,4 @@
-import { GenreName, FILM_GENRE_MAP, SERIE_GENRE_MAP, TMDBResponse, ZOMBIE_KEYWORD_ID, EROTIC_KEYWORD_ID } from '@/types/movie'
+import { GenreName, FILM_GENRE_MAP, SERIE_GENRE_MAP, TMDBResponse, ZOMBIE_KEYWORD_ID, EROTIC_KEYWORD_ID, PORN_KEYWORD_ID } from '@/types/movie'
 
 const BASE_URL = 'https://api.themoviedb.org/3'
 
@@ -21,12 +21,13 @@ export function buildFilmUrl(
   const genreIds       = Array.from(new Set(genres.flatMap((g) => FILM_GENRE_MAP[g] ?? [])))
   const includesZombie = genres.includes('zombie')
   const includesSexy   = genres.includes('sexy')
-  const includesAdult  = genres.includes('18+') || includesSexy
+  const includesPorno  = genres.includes('porno')
+  const includesAdult  = genres.includes('18+') || includesSexy || includesPorno
 
   const sortBy = sortMode === 'new' ? 'primary_release_date.desc'
     : sortMode === 'popular' ? 'popularity.desc'
     : 'vote_average.desc'
-  const minVotes = sortMode === 'new' ? '10' : sortMode === 'popular' ? '50' : '100'
+  const minVotes = includesPorno ? '5' : sortMode === 'new' ? '10' : sortMode === 'popular' ? '50' : '100'
 
   const params = new URLSearchParams({
     language:         'nl-NL',
@@ -40,6 +41,7 @@ export function buildFilmUrl(
   const keywords: number[] = []
   if (includesZombie)       keywords.push(ZOMBIE_KEYWORD_ID)
   if (includesSexy)         keywords.push(EROTIC_KEYWORD_ID)
+  if (includesPorno)        keywords.push(PORN_KEYWORD_ID)
   if (keywords.length > 0)  params.set('with_keywords', keywords.join(','))
   if (includesAdult) {
     params.set('certification_country', 'US')
@@ -61,12 +63,13 @@ export function buildSerieUrl(
 ): string {
   const genreIds      = Array.from(new Set(genres.flatMap((g) => SERIE_GENRE_MAP[g] ?? [])))
   const includesSexy  = genres.includes('sexy')
-  const includesAdult = genres.includes('18+') || includesSexy
+  const includesPorno = genres.includes('porno')
+  const includesAdult = genres.includes('18+') || includesSexy || includesPorno
 
   const sortBy = sortMode === 'new' ? 'first_air_date.desc'
     : sortMode === 'popular' ? 'popularity.desc'
     : 'vote_average.desc'
-  const minVotes = sortMode === 'new' ? '5' : sortMode === 'popular' ? '20' : '50'
+  const minVotes = includesPorno ? '3' : sortMode === 'new' ? '5' : sortMode === 'popular' ? '20' : '50'
 
   const params = new URLSearchParams({
     language:         'nl-NL',
@@ -77,7 +80,10 @@ export function buildSerieUrl(
   })
 
   if (genreIds.length > 0)  params.set('with_genres', genreIds.join(','))
-  if (includesSexy)         params.set('with_keywords', String(EROTIC_KEYWORD_ID))
+  const serieKeywords: number[] = []
+  if (includesSexy)         serieKeywords.push(EROTIC_KEYWORD_ID)
+  if (includesPorno)        serieKeywords.push(PORN_KEYWORD_ID)
+  if (serieKeywords.length > 0) params.set('with_keywords', serieKeywords.join(','))
   if (includesAdult) {
     params.set('certification_country', 'US')
     params.set('certification.gte',     'TV-MA')

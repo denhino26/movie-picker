@@ -122,7 +122,7 @@ export const GENRE_LABELS: Record<GenreName, string> = {
 
 export const ZOMBIE_KEYWORD_ID = 190370
 export const EROTIC_KEYWORD_ID = 6054
-export const PORN_KEYWORD_ID = 155438
+export const PORN_KEYWORD_ID = 445
 
 // ── Year ranges (multi-select) ──────────────────────────────────────────────
 export type YearRangeKey = 'populair' | 'nieuw' | 'recent' | '2010s' | '2000s' | '1990s' | '1980s' | 'classic'
